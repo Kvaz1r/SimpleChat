@@ -54,8 +54,6 @@ init() ->
   wxSizer:add(VSizer2, BDisconnect),
   wxSizer:addSpacer(VSizer2, 60),
   wxSizer:add(VSizer2, BSend),
-
-
   wxSizer:add(MainSizer, VSizer2, []),
   wxPanel:setSizer(Panel, MainSizer),
   wxPanel:connect(Panel, command_button_clicked),
@@ -73,10 +71,7 @@ loop([Frame, OutputText, InputText, B1] = Widgets, [NickText, Ip, Port] = Params
 
     {server,stop}->
       setEditable({Params,B1},true),
-      MD = wxMessageDialog:new(Frame, "Сервер отключен",
-        [{style, ?wxOK}, {caption, "Warning"}]),
-      wxDialog:showModal(MD),
-      wxDialog:destroy(MD),
+      showMessageBox(Frame,"Сервер отключен"),
       gen_tcp:close(ClientSocket),
       loop(Widgets, Params, [], Pid);
 
@@ -91,10 +86,8 @@ loop([Frame, OutputText, InputText, B1] = Widgets, [NickText, Ip, Port] = Params
           send(Socket, term_to_binary({add, new})),
           loop(Widgets, Params, Socket, Pid);
         {error, Reason} ->
-          MD = wxMessageDialog:new(Frame, "Невозможно установить соединение : " ++ atom_to_list(Reason),
-            [{style, ?wxOK}, {caption, "Warning"}]),
-          wxDialog:showModal(MD),
-          wxDialog:destroy(MD),
+          showMessageBox(Frame,
+            "Невозможно установить соединение : " ++ atom_to_list(Reason)),
           loop(Widgets, Params, ClientSocket, Pid)
       end;
 
@@ -108,10 +101,7 @@ loop([Frame, OutputText, InputText, B1] = Widgets, [NickText, Ip, Port] = Params
               wxTextCtrl:getValue(InputText))),
           wxTextCtrl:setValue(InputText, "");
         true ->
-          MD = wxMessageDialog:new(Frame, "Вначале установите соединение!",
-            [{style, ?wxOK}, {caption, "Warning"}]),
-          wxDialog:showModal(MD),
-          wxDialog:destroy(MD)
+          showMessageBox(Frame, "Вначале установите соединение!")
       end,
       loop(Widgets, Params, ClientSocket, Pid);
 
@@ -129,7 +119,6 @@ loop([Frame, OutputText, InputText, B1] = Widgets, [NickText, Ip, Port] = Params
         false -> disconnect(ClientSocket)
       end,
       wx:destroy()
-
   end.
 
 client(Host, Port, Pid) ->
@@ -165,4 +154,10 @@ get_port(Str) -> element(1, string:to_integer(Str)).
 setEditable({TextControls,Button},State)->
   lists:foreach(fun(El)->wxTextCtrl:setEditable(El, State) end,TextControls),
   wxWindow:enable(Button, [{enable, State}]).
+
+showMessageBox(Frame,Text)->
+  MD = wxMessageDialog:new(Frame,Text, [{style, ?wxOK}, {caption, "Warning"}]),
+  wxDialog:showModal(MD),
+  wxDialog:destroy(MD).
+
 
